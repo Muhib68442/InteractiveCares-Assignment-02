@@ -3,6 +3,8 @@
 // CORE FILE OF AUTHENTICATION SYSTEM
 // echo "Core.php";
 
+require_once 'helper.php';
+
 class Core
 {
     private $db_name = "authdb";
@@ -11,6 +13,7 @@ class Core
     private $db_host = "localhost";
     private $conn;
 
+    // INIT
     public function __construct($db_name, $db_user, $db_pass, $db_host)
     {
         $this->db_name = $db_name;
@@ -27,6 +30,7 @@ class Core
         }
     }
 
+    // SIGNUP
     public function signup($username, $email, $hashed_pass)
     {
         $sql = "INSERT INTO users (username, email, password) VALUES (:username, :email, :password)";
@@ -34,17 +38,18 @@ class Core
         $stmt->bindParam(":username", $username);
         $stmt->bindParam(":email", $email);
         $stmt->bindParam(":password", $hashed_pass);
-        if ($stmt->execute()) {
+        try {
+            $stmt->execute();
             session_start();
             $_SESSION['user_id'] = $this->conn->lastInsertId();
 
             alert("Account created successfully", "../login.php");
-        } else {
-            alert("Something went wrong", "../signup.php");
+        } catch (PDOException $e) {
+            alert("Something went wrong ({$e->getMessage()})", "../signup.php");
         }
-
     }
 
+    // LOGIN
     public function login($email, $password, $remember)
     {
         $sql = "SELECT * FROM users WHERE email = :email";
@@ -83,6 +88,7 @@ class Core
         }
     }
 
+    // LOGOUT
     public function logout()
     {
         session_start();
@@ -93,6 +99,70 @@ class Core
             unset($_COOKIE['user_id']);
         }
     }
+
+
+    // FETCH 
+    public function fetch($userID)
+    {
+        $sql = "SELECT * FROM  users WHERE id = :userID";
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(":userID", $userID);
+        try {
+            $stmt->execute();
+            $data = $stmt->fetch(PDO::FETCH_ASSOC);
+            return $data;
+        } catch (PDOException $e) {
+            echo $e->getMessage();
+        }
+    }
+
+    // UPDATE 
+    public function update($username, $email = null)
+    {
+        try {
+            if ($email) {
+                $sql = "UPDATE users SET username = :username, email = :email WHERE id = :userID";
+                $stmt = $this->conn->prepare($sql);
+                $stmt->bindParam(":username", $username);
+                $stmt->bindParam(":email", $email);
+            } else {
+                $sql = "UPDATE users SET username = :username WHERE id = :userID";
+                $stmt = $this->conn->prepare($sql);
+                $stmt->bindParam(":username", $username);
+            }
+
+            session_start();
+            $userID = $_SESSION['user_id'];
+            $stmt->bindParam(":userID", $userID);
+
+            $stmt->execute();
+            return true;
+
+        } catch (PDOException $e) {
+            echo "Update failed: " . $e->getMessage();
+            return false;
+        }
+    }
+
+    // UPDATE PASSWORD 
+    public function update_password($password)
+    {
+        $hashed_pass = password_hash($password, PASSWORD_DEFAULT);
+        $sql = "UPDATE users SET password = :password WHERE id = :userID";
+        session_start();
+        $userID = $_SESSION['user_id'];
+        $stmt = $this->conn->prepare($sql);
+        $stmt->bindParam(":password", $hashed_pass);
+        $stmt->bindParam(":userID", $userID);
+        try {
+            $stmt->execute();
+            return true;
+        } catch (PDOException $e) {
+            echo "Update failed: " . $e->getMessage();
+            return false;
+        }
+    }
+
 
     // CHECK IF EMAIL EXISTS
     public function email_exists($email)
@@ -115,16 +185,5 @@ class Core
     }
 }
 
-// $ica2_auth_system = new Core("authdb", "root", "", "localhost");
 
 
-
-// HELPERS 
-function alert($message, $redirect)
-{
-    echo "<script>
-        alert('$message');
-        window.location.href = '$redirect';
-    </script>";
-    exit;
-}

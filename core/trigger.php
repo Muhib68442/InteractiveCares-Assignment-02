@@ -3,7 +3,7 @@
 require "core.php";
 // echo "Trigger.php";
 
-
+// CREATE INSTANCE 
 $ica2_auth_system = new Core("authdb", "root", "", "localhost");
 
 
@@ -27,11 +27,7 @@ if (isset($_POST['signup'])) {
     }
 
     // VALIDATE EMAIL AND CHECK UNIQUE
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-        alert("Invalid email address", "../signup.php");
-        $error = true;
-        return false;
-    }
+    check_email_format($email);
 
     if ($ica2_auth_system->email_exists($email)) {
         alert("Email already exists", "../signup.php");
@@ -40,22 +36,12 @@ if (isset($_POST['signup'])) {
     }
 
     // VALIDATE PASSWORD LENGTH
-    if (strlen($password) < 8) {
-        alert("Password must be at least 8 characters", "../signup.php");
-        $error = true;
-        return false;
-    }
+    check_length($password, 8, "Password");
 
     // USERNAME FIELD SANITIZE 
-    if (strlen($username) <= 0) {
-        alert("Username can't be empty", "../signup.php");
-        $error = true;
-        return false;
-    } else if (!preg_match("/^[a-zA-Z .]+$/", $username)) {
-        alert("Username can only contain letters", "../signup.php");
-        $error = true;
-        return false;
-    }
+    check_length($username, 3, "Full Name");
+    sanitize_username($username);
+
 
     // CHECK PASSWORD CONFIRMATION (+ HASH PASS)
     if ($password === $password_confirmation) {
@@ -101,3 +87,75 @@ if (isset($_GET['logout'])) {
     header("Location: ../login.php");
     exit();
 }
+
+
+// TRIGGER UPDATE 
+if (isset($_POST['update'])) {
+
+    $username = $_POST['username'];
+    $email = $_POST['email'];
+    $prev_email = $_POST['prev_email'];
+
+    // USERNAME VALIDATION
+    check_length($username, 3, "Username");
+    sanitize_username($username);
+
+    // UPDATE EMAIL ONLY IF NEEDED 
+    if ($email != $prev_email) {    // EMAIL CGANGED
+
+        check_length($email, 3, "Email");
+        check_email_format($email);
+
+        // EMAIL UNIQUE
+        if ($ica2_auth_system->email_exists($email)) {
+            alert("Email already exists! Please use another email.", "../edit-profile.php");
+            return false;
+        }
+    }
+
+
+    if ($ica2_auth_system->update($username, ($email == $prev_email ? null : $email))) {
+        alert("Profile updated successfully", "../edit-profile.php");
+    } else {
+        alert("Something went wrong", "../edit-profile.php");
+    }
+
+}
+
+
+// TRIGGER PASSWORD 
+if (isset($_POST['update_password'])) {
+
+    $old_pass = $_POST['old_password'];
+    $new_pass = $_POST['new_password'];
+    $confirm_pass = $_POST['confirm_password'];
+
+    session_start();
+    $userID = $_SESSION['user_id'];
+
+    // FETCH SAVED PASSWORD 
+    $user = $ica2_auth_system->fetch($userID);
+    $saved_pass = $user['password']; // HASHED 
+    // echo $saved_pass;
+
+    // VERIFY 
+    if (password_verify($old_pass, $saved_pass)) {
+
+        check_length($new_pass, 8, "Password");
+
+        if ($new_pass === $confirm_pass) {
+            if ($ica2_auth_system->update_password($new_pass)) {
+                alert("Password updated successfully", "../change-password.php");
+            } else {
+                alert("Something went wrong", "../change-password.php");
+            }
+        } else {
+            alert("Password does not match", "../change-password.php");
+        }
+
+    } else {
+        alert("Invalid password", "../change-password.php");
+    }
+
+}
+

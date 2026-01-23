@@ -1,3 +1,11 @@
+<?php
+include 'core/middleware.php';
+$middleware->check_if_not_logged();
+
+// FETCH DATA 
+require_once "core/trigger.php";
+$user_data = $ica2_auth_system->fetch($_SESSION['user_id']);
+?>
 <!doctype html>
 <html lang="en">
 
@@ -149,7 +157,7 @@
             </svg>
             <span class="font-medium">Change Password</span>
           </a>
-          <a href="#" class="flex items-center space-x-3 p-3 rounded-lg sidebar-link">
+          <a href="core/trigger.php?logout" class="flex items-center space-x-3 p-3 rounded-lg sidebar-link">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
               stroke="currentColor" class="w-5 h-5 text-gray-500">
               <path stroke-linecap="round" stroke-linejoin="round"
@@ -170,7 +178,7 @@
           <p class="text-gray-600">Update your personal information</p>
         </div>
         <div class="flex items-center space-x-4 mt-4 md:mt-0">
-          <button onclick="window.location.href = 'login.php'"
+          <button onclick="window.location.href = 'core/trigger.php?logout'"
             class="flex items-center space-x-2 px-4 py-2 bg-white border border-gray-200 rounded-lg text-gray-600 hover:text-indigo-600 hover:border-indigo-600 transition-all duration-200">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
               stroke="currentColor" class="w-5 h-5">
@@ -187,7 +195,7 @@
         <div class="bg-white rounded-xl shadow overflow-hidden">
           <div class="bg-gradient-to-r from-indigo-500 to-purple-600 h-2"></div>
           <div class="p-6">
-            <form class="space-y-6">
+            <form class="space-y-6" method="POST" action="core/trigger.php">
               <div class="grid grid-cols-1 gap-6">
                 <div>
                   <label class="block text-sm font-semibold text-gray-700 mb-2">Full Name</label>
@@ -199,7 +207,7 @@
                           d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z" />
                       </svg>
                     </div>
-                    <input type="text" value="Alex Johnson"
+                    <input type="text" value="<?php echo $user_data['username'] ?? '' ?>" name="username"
                       class="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
                       placeholder="John Doe" />
                   </div>
@@ -215,7 +223,8 @@
                           d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
                       </svg>
                     </div>
-                    <input type="email" value="alex.johnson@example.com"
+                    <input type="hidden" name="prev_email" value="<?php echo $user_data['email'] ?? '' ?>">
+                    <input type="email" value="<?php echo $user_data['email'] ?? '' ?>" name="email"
                       class="w-full pl-10 pr-3 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all duration-300"
                       placeholder="you@example.com" />
                   </div>
@@ -223,7 +232,7 @@
               </div>
 
               <div class="flex justify-end pt-4">
-                <button type="submit"
+                <button type="submit" name="update"
                   class="px-6 py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-medium rounded-xl hover:from-indigo-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5">
                   Save Changes
                 </button>
