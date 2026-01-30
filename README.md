@@ -70,16 +70,15 @@ All database operations use **prepared statements** to prevent SQL injection, an
 
 1. Clone the repository:
    ```bash
-   git clone -b main https://github.com/muhib2929/ica2.git
+   git clone -b main https://github.com/Muhib68442/InteractiveCares-Assignment-02
    ```
 2. Start XAMPP and place the project in your htdocs folder:
    ```bash
-   cd ica2
-   xampp start
+   cd InteractiveCares-Assignment-02
    ```
 3. Open your browser and navigate to:
    ```bash
-   http://localhost/ica2/login.php
+   http://localhost/InteractiveCares-Assignment-02/login.php
    ```
 
 **NOTE:** The project automatically creates the database, users table, and seeds a default user if the database is not found. For details, see `MigrateNote.md`.
