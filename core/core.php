@@ -21,12 +21,36 @@ class Core
         $this->db_pass = $db_pass;
         $this->db_host = $db_host;
 
+        // try {
+        //     $this->conn = new PDO("mysql:host=$this->db_host;dbname=$this->db_name", $this->db_user, $this->db_pass);
+        //     $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        //     // echo "Connected Established";
+        // } catch (PDOException $e) {
+        //     // if db not found, then create db and mrun migration.php
+        //     // code here 
+
+        //     die("Connection failed: " . $e->getMessage());
+        // }
+
         try {
             $this->conn = new PDO("mysql:host=$this->db_host;dbname=$this->db_name", $this->db_user, $this->db_pass);
             $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            // echo "Connected Established";
         } catch (PDOException $e) {
-            die("Connection failed: " . $e->getMessage());
+
+            // RUN MIGRATION
+            require_once 'migration.php';
+            $migration = new Migration($this->db_name, $this->db_user, $this->db_pass, $this->db_host);
+            $migration->create_users_table();
+            $migration->seed_user("Md. Muhibbur Rahman", "muhib2929@gmail.com", "12345678");
+
+            // RECONNECT
+            try {
+                $this->conn = new PDO("mysql:host=$this->db_host;dbname=$this->db_name", $this->db_user, $this->db_pass);
+                $this->conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+            } catch (PDOException $e2) {
+                die("Connection failed even after migration: " . $e2->getMessage());
+            }
+
         }
     }
 
@@ -96,7 +120,8 @@ class Core
         session_destroy();
 
         if (isset($_COOKIE['user_id'])) {
-            unset($_COOKIE['user_id']);
+            // unset($_COOKIE['user_id']);
+            setcookie("user_id", "", time() - 3600, "/");
         }
     }
 

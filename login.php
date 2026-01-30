@@ -1,6 +1,8 @@
 <?php
 
 include 'core/middleware.php';
+include 'core/trigger.php';  // MIGRATE FIRST TIME
+
 $middleware->check_if_already_logged();
 
 
